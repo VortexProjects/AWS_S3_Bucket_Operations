@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 
 @RestController
@@ -43,6 +44,12 @@ public class MainController {
     public ResponseEntity<Object> deleteObject(@RequestBody BucketNameAndKey bucketNameAndKey)
     {
         return s3Service.deleteObjectService(bucketNameAndKey);
+    }
+
+    @GetMapping("createbucket")
+    public ResponseEntity<Object> createBucket(@RequestHeader String bucketName)
+    {
+        return s3Service.createBucketService(bucketName);
     }
     
 }

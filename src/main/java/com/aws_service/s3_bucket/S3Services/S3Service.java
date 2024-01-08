@@ -17,6 +17,7 @@ import com.aws_service.s3_bucket.Models.ResponseMessage;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
@@ -149,7 +150,6 @@ public class S3Service {
                         .build();
 
                 client.deleteObject(deleteObjectRequest);
-                System.out.println("Object '" + bucketNameAndKey.getKey() + "' deletion success!");
 
                 responseMessage.setSuccess(true);
                 responseMessage.setMessage("Object '" + bucketNameAndKey.getKey() + "' deletion success!");
@@ -169,5 +169,28 @@ public class S3Service {
             return ResponseEntity.badRequest().body(responseMessage);
 
         }
+    }
+
+    public ResponseEntity<Object> createBucketService(String bucketName) {
+        S3Client client = StaticInfos.s3Client;
+
+        try {
+            CreateBucketRequest createBucketRequest = CreateBucketRequest.builder()
+                    .bucket(bucketName)
+                    .build();
+            client.createBucket(createBucketRequest);
+
+            responseMessage.setSuccess(true);
+            responseMessage.setMessage("Bucket with name " + bucketName + " created successfully.");
+
+            return ResponseEntity.ok().body(responseMessage);
+        } catch (Exception e) {
+            responseMessage.setSuccess(false);
+            responseMessage
+                    .setMessage("Bucket with name " + bucketName + " creation failed. Reason: " + e.getMessage());
+
+            return ResponseEntity.badRequest().body(responseMessage);
+        }
+
     }
 }
