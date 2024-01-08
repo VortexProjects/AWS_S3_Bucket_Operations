@@ -1,5 +1,6 @@
 package com.aws_service.s3_bucket.S3Services;
 
+import java.io.File;
 import java.time.Duration;
 import java.util.List;
 
@@ -9,14 +10,18 @@ import org.springframework.stereotype.Service;
 
 import com.aws_service.s3_bucket.StaticInfos;
 import com.aws_service.s3_bucket.Models.BucketNameAndKey;
+import com.aws_service.s3_bucket.Models.BucketNameKeyPath;
 import com.aws_service.s3_bucket.Models.ResponseMessage;
 
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListBucketsRequest;
 import software.amazon.awssdk.services.s3.model.ListBucketsResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
@@ -26,6 +31,9 @@ public class S3Service {
 
     @Autowired
     private ResponseMessage responseMessage;
+
+    @Autowired
+    private BucketNameAndKey bucketNameAndKey;
 
     public boolean checkObjectInBucket(String bucketName, String key) {
         S3Client s3Client = StaticInfos.s3Client;
@@ -97,6 +105,35 @@ public class S3Service {
         } catch (Exception e) {
             responseMessage.setSuccess(false);
             responseMessage.setMessage("Internal Server Error");
+            return ResponseEntity.badRequest().body(responseMessage);
+        }
+    }
+
+    public ResponseEntity<Object> putObjectService(BucketNameKeyPath bucketNameKeyPath) {
+        Region region = Region.AP_NORTHEAST_2;
+        S3Client client = S3Client.builder().region(region).build();
+
+        try {
+            PutObjectRequest putOb = PutObjectRequest.builder()
+                    .bucket(bucketNameKeyPath.getBucketName())
+                    .key(bucketNameKeyPath.getKey())
+                    .build();
+
+            client.putObject(putOb, RequestBody.fromFile(new File(bucketNameKeyPath.getPath())));
+
+            bucketNameAndKey.setBucketName(bucketNameKeyPath.getBucketName());
+            bucketNameAndKey.setKey(bucketNameKeyPath.getKey());
+
+            responseMessage.setSuccess(true);
+            responseMessage.setMessage("Object " + bucketNameKeyPath.getKey() + " insertion success"+ preSignedURLService(bucketNameAndKey));
+
+            return ResponseEntity.ok().body(responseMessage);
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            responseMessage.setSuccess(false);
+            responseMessage.setMessage("Object " + bucketNameKeyPath.getKey() + " insertion falied");
+
             return ResponseEntity.badRequest().body(responseMessage);
         }
     }

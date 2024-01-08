@@ -6,7 +6,8 @@ import lombok.Data;
 
 @Data
 @Component
-public class BucketNameAndKey {
+public class BucketNameKeyPath {
     private String bucketName;
     private String key;
+    private String path;
 }
