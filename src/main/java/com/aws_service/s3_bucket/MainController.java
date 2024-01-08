@@ -9,6 +9,7 @@ import com.aws_service.s3_bucket.S3Services.S3Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,6 +37,12 @@ public class MainController {
     public ResponseEntity<Object> putObject(@RequestBody BucketNameKeyPath bucketNameKeyPath)
     {
         return s3Service.putObjectService(bucketNameKeyPath);
+    }
+
+    @DeleteMapping("deleteobject")
+    public ResponseEntity<Object> deleteObject(@RequestBody BucketNameAndKey bucketNameAndKey)
+    {
+        return s3Service.deleteObjectService(bucketNameAndKey);
     }
     
 }

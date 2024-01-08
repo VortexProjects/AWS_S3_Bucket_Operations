@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.stereotype.Service;
 
 import com.aws_service.s3_bucket.StaticInfos;
@@ -14,9 +15,9 @@ import com.aws_service.s3_bucket.Models.BucketNameKeyPath;
 import com.aws_service.s3_bucket.Models.ResponseMessage;
 
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListBucketsRequest;
@@ -110,8 +111,7 @@ public class S3Service {
     }
 
     public ResponseEntity<Object> putObjectService(BucketNameKeyPath bucketNameKeyPath) {
-        Region region = Region.AP_NORTHEAST_2;
-        S3Client client = S3Client.builder().region(region).build();
+        S3Client client = StaticInfos.s3Client;
 
         try {
             PutObjectRequest putOb = PutObjectRequest.builder()
@@ -125,16 +125,49 @@ public class S3Service {
             bucketNameAndKey.setKey(bucketNameKeyPath.getKey());
 
             responseMessage.setSuccess(true);
-            responseMessage.setMessage("Object " + bucketNameKeyPath.getKey() + " insertion success"+ preSignedURLService(bucketNameAndKey));
+            responseMessage.setMessage("Object " + bucketNameKeyPath.getKey() + " insertion success"
+                    + preSignedURLService(bucketNameAndKey));
 
             return ResponseEntity.ok().body(responseMessage);
 
         } catch (Exception e) {
-            System.out.println(e.getMessage());
             responseMessage.setSuccess(false);
             responseMessage.setMessage("Object " + bucketNameKeyPath.getKey() + " insertion falied");
 
             return ResponseEntity.badRequest().body(responseMessage);
+        }
+    }
+
+    public ResponseEntity<Object> deleteObjectService(BucketNameAndKey bucketNameAndKey) {
+        S3Client client = StaticInfos.s3Client;
+
+        try {
+            if (checkObjectInBucket(bucketNameAndKey.getBucketName(), bucketNameAndKey.getKey())) {
+                DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                        .bucket(bucketNameAndKey.getBucketName())
+                        .key(bucketNameAndKey.getKey())
+                        .build();
+
+                client.deleteObject(deleteObjectRequest);
+                System.out.println("Object '" + bucketNameAndKey.getKey() + "' deletion success!");
+
+                responseMessage.setSuccess(true);
+                responseMessage.setMessage("Object '" + bucketNameAndKey.getKey() + "' deletion success!");
+
+                return ResponseEntity.ok().body(responseMessage);
+
+            } else {
+                responseMessage.setSuccess(false);
+                responseMessage.setMessage("Object '" + bucketNameAndKey.getKey() + "' not found");
+
+                return ((BodyBuilder) ResponseEntity.notFound()).body(responseMessage);
+            }
+        } catch (Exception e) {
+            responseMessage.setSuccess(false);
+            responseMessage.setMessage("Internal Server Error");
+
+            return ResponseEntity.badRequest().body(responseMessage);
+
         }
     }
 }
